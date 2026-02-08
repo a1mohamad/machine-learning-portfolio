@@ -32,8 +32,8 @@ graph TD
 ### 1. **Clone the repository**
 
 ```bash
-git clone https://github.com/a1mohamad/tmdb-prediction.git
-cd tmdb-boxoffice-prediction
+git clone https://github.com/a1mohamad/Projects.git
+cd Projects/ml_modeling/Box\ Office\ Revenue/project/
 ```
 
 ### 2. **Configure Environment Variables**
@@ -125,12 +125,6 @@ Remove unused images:
 ```bash
 docker image prune -a
 ```
-
----
-
-## 📝 License
-
-MIT License. See [LICENSE](LICENSE) for details.
 
 ---
 
