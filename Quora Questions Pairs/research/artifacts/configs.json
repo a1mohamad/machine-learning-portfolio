@@ -1,0 +1,93 @@
+{
+  "system": {
+    "is_deterministic": false,
+    "mlflow_tracking_uri": "sqlite:///./mlflow-quora-questions-pairs.db",
+    "next_line_counter": 180,
+    "seed": 28,
+    "used_scaler": false,
+    "device": "cuda"
+  },
+  "path": {
+    "root_dir": "C:\\Users\\98922\\Documents\\python_scripts\\AI\\research-notebooks\\Quora Questions Pairs\\research",
+    "emb_dir": "C:\\Users\\98922\\Documents\\python_scripts\\AI\\research-notebooks",
+    "emb_path": "C:\\Users\\98922\\Documents\\python_scripts\\AI\\research-notebooks\\glove.6B.100d.txt",
+    "artifact_dir": "C:\\Users\\98922\\Documents\\python_scripts\\AI\\research-notebooks\\Quora Questions Pairs\\research\\artifacts",
+    "model_script": "C:\\Users\\98922\\Documents\\python_scripts\\AI\\research-notebooks\\Quora Questions Pairs\\research\\model_architecture.py",
+    "notebook_path": "C:\\Users\\98922\\Documents\\python_scripts\\AI\\research-notebooks\\Quora Questions Pairs\\research\\LSTM-attention.ipynb",
+    "data_dir": "C:\\Users\\98922\\Documents\\python_scripts\\AI\\research-notebooks\\Quora Questions Pairs\\research\\data",
+    "mlflow_dir": "C:\\Users\\98922\\Documents\\python_scripts\\AI\\research-notebooks\\Quora Questions Pairs\\research\\mlruns",
+    "checkpoint_dir": "C:\\Users\\98922\\Documents\\python_scripts\\AI\\research-notebooks\\Quora Questions Pairs\\research\\artifacts\\checkpoint",
+    "config_path": "C:\\Users\\98922\\Documents\\python_scripts\\AI\\research-notebooks\\Quora Questions Pairs\\research\\artifacts\\configs.json",
+    "history_path": "C:\\Users\\98922\\Documents\\python_scripts\\AI\\research-notebooks\\Quora Questions Pairs\\research\\artifacts\\training_history.json",
+    "vocabs_path": "C:\\Users\\98922\\Documents\\python_scripts\\AI\\research-notebooks\\Quora Questions Pairs\\research\\artifacts\\vocabs.json",
+    "label_mapping_path": "C:\\Users\\98922\\Documents\\python_scripts\\AI\\research-notebooks\\Quora Questions Pairs\\research\\artifacts\\label_mapping.json",
+    "train_zip_path": "C:\\Users\\98922\\Documents\\python_scripts\\AI\\research-notebooks\\Quora Questions Pairs\\research\\data\\train.csv.zip",
+    "train_csv_path": "C:\\Users\\98922\\Documents\\python_scripts\\AI\\research-notebooks\\Quora Questions Pairs\\research\\data\\train.csv"
+  },
+  "token": {
+    "pad_token": "<PAD>",
+    "unk_token": "<UNK>",
+    "pad_idx": 0,
+    "unk_idx": 1,
+    "lowercase": true,
+    "uppercase": false,
+    "max_length": 50,
+    "vocab_size": 20000
+  },
+  "loader": {
+    "batch_size": 128,
+    "num_workers": 0,
+    "is_pin_memory": true
+  },
+  "train": {
+    "label_smoothing": 0.1,
+    "clip_norm": 1.5,
+    "early_stop_metric": "loss",
+    "checkpoint_metric": "F1Score",
+    "checkpoint_mode": "max",
+    "scheduler_metric": "loss",
+    "early_stop_min_delta": 0.0001,
+    "early_stop_mode": "min",
+    "early_stop_patience": 3,
+    "epochs": 50,
+    "learning_rate": 0.0003,
+    "metrics_threshold": 0.5,
+    "scheduler_type": "ReduceLROnPlateau",
+    "scheduler_factor": 0.5,
+    "scheduler_min_lr": 1e-07,
+    "scheduler_patience": 2,
+    "scheduler_threshold": 0.01,
+    "scheduler_threshold_mode": "rel",
+    "scheduler_mode": "min",
+    "use_pos_weight": false,
+    "train_test_split": 0.9,
+    "unfreeze_epoch": null,
+    "weight_decay": 0.0005
+  },
+  "model": {
+    "model_type": "LSTM_attention",
+    "layer_norm_emb": true,
+    "freeze_token_embedding": true,
+    "token_embedding": "gloVe-6B-100d",
+    "emb_dim": 100,
+    "emb_dp": 0.2,
+    "bidirectional": true,
+    "dropout": 0.5,
+    "fc_dims": [
+      512,
+      256
+    ],
+    "fc_non_linearity": "GELU",
+    "hidden_dim": 256,
+    "attention_dropout": 0.2,
+    "layer_norm_lstm": false,
+    "layer_norm_attention": false,
+    "attention_projection": false,
+    "mask_fill_num": -10000000000.0,
+    "siamese_concat": [
+      "difference"
+    ],
+    "num_layers": 2,
+    "skip_connection": false
+  }
+}
