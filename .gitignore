@@ -1,0 +1,23 @@
+# MLflow
+mlruns/
+*.db
+
+# Jupyter Notebook checkpoints
+.ipynb_checkpoints/
+
+# Python cache
+__pycache__/
+
+# Embedding
+glove.6B.100d.txt
+
+# Some other files like model
+
+Cassava Leaf Disease/model/
+Digit Recognizer/data/test.csv
+Global Wheat Detection/model/
+House Prediction/catboost_info/
+MoNuSeg/
+Jigsaw Toxic Comments/
+
+
