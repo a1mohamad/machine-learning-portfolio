@@ -2,6 +2,7 @@
 import json
 import ast
 import sys
+import re
 from pathlib import Path
 from importlib.metadata import distributions, packages_distributions
 
@@ -29,24 +30,33 @@ class MyMagics(Magics):
         print(f"📄 Scanning: {nb_file.name}")
 
         # ---- Extract imports ----
-        imported = set()
+        collected_modules = set()
         with open(nb_file, 'r', encoding='utf-8') as f:
             nb = json.load(f)
 
         for cell in nb.get('cells', []):
-            if cell.get('cell_type') == 'code':
-                code = ''.join(cell.get('source', []))
-                print(f"\n--- Cell source:\n{code[:200]}...")  # preview
-                try:
-                    tree = ast.parse(code)
-                    for node in ast.walk(tree):
-                        if isinstance(node, ast.Import):
-                            for alias in node.names:
-                                print(f"Import: {alias.name}")
-                        elif isinstance(node, ast.ImportFrom):
-                            print(f"ImportFrom: module={node.module}, names={[a.name for a in node.names]}")
-                except SyntaxError as e:
-                    print(f"SyntaxError: {e}")
+            if cell.get('cell_type') != 'code':
+                continue
+
+            code = ''.join(cell.get('source', []))
+            # Remove IPython magics and shell commands that break ast.parse
+            clean_code = re.sub(r'^\s*[%!].*$', '', code, flags=re.MULTILINE)
+            if not clean_code.strip():
+                continue
+
+            try:
+                tree = ast.parse(clean_code)
+                for node in ast.walk(tree):
+                    if isinstance(node, ast.Import):
+                        for alias in node.names:
+                            collected_modules.add(alias.name.split('.')[0])
+                    elif isinstance(node, ast.ImportFrom):
+                        if node.module:
+                            collected_modules.add(node.module.split('.')[0])
+            except SyntaxError as e:
+                # Optionally log which cell failed
+                print(f"⚠️  Skipping cell with invalid Python syntax: {e}")
+                continue
 
         # Filter stdlib
         try:
@@ -56,8 +66,10 @@ class MyMagics(Magics):
             stdlib.update(['os', 'sys', 'json', 're', 'math', 'time', 'datetime',
                           'collections', 'itertools', 'functools', 'random', 'pathlib',
                           'logging', 'warnings', 'inspect', 'shutil', 'zipfile'])
-        third_party = {p for p in imported if p not in stdlib}
+
+        third_party = {p for p in collected_modules if p not in stdlib}
         print(f"DEBUG: Detected third-party imports: {sorted(third_party)}")
+
         # Map to distribution names
         import_to_dist = packages_distributions()
         dist_versions = {dist.metadata['Name']: dist.version for dist in distributions()}
