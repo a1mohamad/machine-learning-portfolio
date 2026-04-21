@@ -42,7 +42,7 @@
     "is_pin_memory": true
   },
   "train": {
-    "label_smoothing": 0.1,
+    "loss": "Consrative Loss",
     "clip_norm": 1.5,
     "early_stop_metric": "loss",
     "checkpoint_metric": "F1Score",
@@ -61,7 +61,6 @@
     "scheduler_threshold": 0.01,
     "scheduler_threshold_mode": "rel",
     "scheduler_mode": "min",
-    "use_pos_weight": false,
     "train_test_split": 0.9,
     "unfreeze_epoch": null,
     "weight_decay": 0.0005
@@ -82,6 +81,7 @@
     "layer_norm_lstm": false,
     "layer_norm_attention": true,
     "attention_projection": false,
+    "margin": 2.0,
     "mask_fill_num": -10000000000.0,
     "siamese_similarity_parm": [
       "Euclidean Distance"
