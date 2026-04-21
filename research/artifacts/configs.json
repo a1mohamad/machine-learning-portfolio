@@ -12,8 +12,10 @@
     "emb_dir": "C:\\Users\\98922\\Documents\\python_scripts\\AI\\research-notebooks",
     "emb_path": "C:\\Users\\98922\\Documents\\python_scripts\\AI\\research-notebooks\\glove.6B.100d.txt",
     "artifact_dir": "C:\\Users\\98922\\Documents\\python_scripts\\AI\\research-notebooks\\Quora Questions Pairs\\research\\artifacts",
+    "req_text": "C:\\Users\\98922\\Documents\\python_scripts\\AI\\research-notebooks\\Quora Questions Pairs\\research\\requirements.txt",
+    "req_script": "C:\\Users\\98922\\Documents\\python_scripts\\AI\\research-notebooks\\Quora Questions Pairs\\research\\requirements.py",
     "model_script": "C:\\Users\\98922\\Documents\\python_scripts\\AI\\research-notebooks\\Quora Questions Pairs\\research\\model_architecture.py",
-    "notebook_path": "C:\\Users\\98922\\Documents\\python_scripts\\AI\\research-notebooks\\Quora Questions Pairs\\research\\LSTM-attention.ipynb",
+    "notebook_path": "C:\\Users\\98922\\Documents\\python_scripts\\AI\\research-notebooks\\Quora Questions Pairs\\research\\LSTM-attention-train.ipynb",
     "data_dir": "C:\\Users\\98922\\Documents\\python_scripts\\AI\\research-notebooks\\Quora Questions Pairs\\research\\data",
     "mlflow_dir": "C:\\Users\\98922\\Documents\\python_scripts\\AI\\research-notebooks\\Quora Questions Pairs\\research\\mlruns",
     "checkpoint_dir": "C:\\Users\\98922\\Documents\\python_scripts\\AI\\research-notebooks\\Quora Questions Pairs\\research\\artifacts\\checkpoint",
@@ -65,27 +67,24 @@
     "weight_decay": 0.0005
   },
   "model": {
-    "model_type": "LSTM_attention",
+    "model_type": "LSTM-attention",
+    "attention_type": "OneHead-Bahdanau",
     "layer_norm_emb": true,
     "freeze_token_embedding": true,
     "token_embedding": "gloVe-6B-100d",
     "emb_dim": 100,
     "emb_dp": 0.2,
+    "loss": "Consrative Loss",
     "bidirectional": true,
     "dropout": 0.5,
-    "fc_dims": [
-      512,
-      256
-    ],
-    "fc_non_linearity": "GELU",
     "hidden_dim": 256,
     "attention_dropout": 0.2,
     "layer_norm_lstm": false,
-    "layer_norm_attention": false,
+    "layer_norm_attention": true,
     "attention_projection": false,
     "mask_fill_num": -10000000000.0,
-    "siamese_concat": [
-      "difference"
+    "siamese_similarity_parm": [
+      "Euclidean Distance"
     ],
     "num_layers": 2,
     "skip_connection": false
