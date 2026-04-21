@@ -15,9 +15,6 @@ class ModelConfig:
     LOSS = "Consrative Loss"
     BIDIRECTIONAL = True
     DROPOUT = 0.5
-    if LOSS == "BCE":
-        FC_DIMS = (512,256)
-        FC_NON_LINEARITY = "GELU"
     HIDDEN_DIM = 256
     ATTENTION_DROPOUT = 0.2
     LAYER_NORM_LSTM = False
@@ -25,6 +22,7 @@ class ModelConfig:
     ATTENTION_PROJECTION = False
     if ATTENTION_PROJECTION:
         PROJECT_DIM = HIDDEN_DIM // 2
+    MARGIN = 2.0
     MASK_FILL_NUM = -1e10
     SIAMESE_SIMILARITY_PARM = ["Euclidean Distance"]
     NUM_LAYERS = 2
@@ -107,4 +105,4 @@ class QuoraSiameseClassifier(nn.Module):
     def forward(self, q1, q2):
         h1 = self.proj(self._encode(q1))
         h2 = self.proj(self._encode(q2))
-        return logits
+        return h1, h2
