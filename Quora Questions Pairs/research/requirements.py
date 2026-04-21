@@ -19,15 +19,15 @@ class MyMagics(Magics):
         """
         line = line.strip()
         if not line:
-            print("❌ Please provide the notebook path: %updatereqs notebook.ipynb")
+            print(">>> Please provide the notebook path: %updatereqs notebook.ipynb")
             return
 
         nb_file = Path(line)
         if not nb_file.exists():
-            print(f"❌ File not found: {nb_file}")
+            print(f">>> File not found: {nb_file}")
             return
 
-        print(f"📄 Scanning: {nb_file.name}")
+        print(f">>> Scanning: {nb_file.name}")
 
         # ---- Extract imports ----
         collected_modules = set()
@@ -55,7 +55,7 @@ class MyMagics(Magics):
                             collected_modules.add(node.module.split('.')[0])
             except SyntaxError as e:
                 # Optionally log which cell failed
-                print(f"⚠️  Skipping cell with invalid Python syntax: {e}")
+                print(f">>>  Skipping cell with invalid Python syntax: {e}")
                 continue
 
         # Filter stdlib
@@ -68,7 +68,7 @@ class MyMagics(Magics):
                           'logging', 'warnings', 'inspect', 'shutil', 'zipfile'])
 
         third_party = {p for p in collected_modules if p not in stdlib}
-        print(f"DEBUG: Detected third-party imports: {sorted(third_party)}")
+        print(f">>> Detected third-party imports: {sorted(third_party)}")
 
         # Map to distribution names
         import_to_dist = packages_distributions()
@@ -84,7 +84,7 @@ class MyMagics(Magics):
                 elif imp in dist_versions:
                     dist_names = [imp]
                 else:
-                    print(f"⚠️  Skipping '{imp}' (no matching package found)")
+                    print(f">>> Skipping '{imp}' (no matching package found)")
                     continue
 
             for dname in dist_names:
@@ -110,8 +110,8 @@ class MyMagics(Magics):
 
         added = set(new_packages) - set(existing)
         if added:
-            print(f"✅ Added: {', '.join(added)}")
-        print(f"📦 Total packages in requirements.txt: {len(final)}")
+            print(f">>> Added: {', '.join(added)}")
+        print(f">>> Total packages in requirements.txt: {len(final)}")
 
 
 def load_ipython_extension(ipython):
