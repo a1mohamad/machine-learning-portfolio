@@ -3,7 +3,7 @@ import torch.nn as nn
 import torch.nn.functional as F
 
 class ModelConfig:
-    MODEL_TYPE = "LSTM-attention"
+    MODEL_TYPE = "LSTM_attention"
     ATTENTION_TYPE = "OneHead-Bahdanau"
     # Embedding
     LAYER_NORM_EMB = True
