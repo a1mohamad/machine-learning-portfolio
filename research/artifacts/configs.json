@@ -54,10 +54,13 @@
     "epochs": 50,
     "learning_rate": 0.0003,
     "metrics_threshold": 0.5,
-    "scheduler_type": "OneCycleLR",
-    "scheduler_pct_start": 0.3,
-    "scheduler_div_factor": 25,
-    "scheduler_final_div_factor": 1000,
+    "scheduler_type": "ReduceLROnPlateau",
+    "scheduler_factor": 0.5,
+    "scheduler_min_lr": 1e-07,
+    "scheduler_patience": 2,
+    "scheduler_threshold": 0.01,
+    "scheduler_threshold_mode": "rel",
+    "scheduler_mode": "min",
     "train_test_split": 0.9,
     "unfreeze_epoch": null,
     "weight_decay": 0.0005
@@ -78,7 +81,7 @@
     "layer_norm_lstm": false,
     "layer_norm_attention": true,
     "attention_projection": false,
-    "margin": 2.0,
+    "margin": 1.0,
     "mask_fill_num": -10000000000.0,
     "siamese_similarity_parm": [
       "Euclidean Distance"
