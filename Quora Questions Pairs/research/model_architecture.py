@@ -22,7 +22,7 @@ class ModelConfig:
     ATTENTION_PROJECTION = False
     if ATTENTION_PROJECTION:
         PROJECT_DIM = HIDDEN_DIM // 2
-    MARGIN = 2.0
+    MARGIN = 1.0
     MASK_FILL_NUM = -1e10
     SIAMESE_SIMILARITY_PARM = ["Euclidean Distance"]
     NUM_LAYERS = 2
