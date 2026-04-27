@@ -110,7 +110,11 @@ class QuoraSiameseClassifier(nn.Module):
         return ctx, weights
 
     def forward(self, q1, q2, return_weights=False):
-        h1 = self.proj(self._encode(q1))
-        h2 = self.proj(self._encode(q2))
+        h1, w1 = self._encode(q1)
+        h2, w2 = self._encode(q2)
+        h1 = self.proj(h1), self.proj(h2)
+        h2  
         dist = F.pairwise_distance(h1, h2, p=2)
+        if return_weights:
+            return dist, (w1, w2)
         return dist
