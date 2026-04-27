@@ -57,12 +57,16 @@ class Attention(nn.Module):
         return context.squeeze(1), weights
 
 class QuoraSiameseClassifier(nn.Module):
-    def __init__(self, vocab_size, config=model_cfg, embedding=None):
+    def __init__(self, vocab_size, config=model_cfg, embedding=None, stop_mask=None):
         super().__init__()
         self.config = config
         self.embedding = nn.Embedding(vocab_size, config.EMB_DIM)
         self.emb_norm = nn.LayerNorm(config.EMB_DIM)
         self.emb_dropout = nn.Dropout(config.EMB_DP)
+        if stop_mask is not None:
+            self.register_buffer("stop_mask", stop_mask)
+        else:
+            self.stop_mask = None
         if embedding is not None:
             print("Glove copied in Embedding Layer...")
             self.embedding.weight.data.copy_(embedding)
@@ -94,15 +98,18 @@ class QuoraSiameseClassifier(nn.Module):
             emb = self.emb_norm(emb)
         emb = self.emb_dropout(emb)
         mask = self._create_mask(question)
+        if self.stop_mask is not None:
+            token_stop_mask = self.stop_mask[question]
+            mask = mask * token_stop_mask.float()
         out, _ = self.LSTM(emb)
         if self.config.LAYER_NORM_LSTM:
             out = self.lstm_norm(out)
-        ctx, _ = self.attention(out, mask)
+        ctx, weights = self.attention(out, mask)
         if self.config.LAYER_NORM_ATTENTION:
             ctx = self.attn_norm(ctx)
-        return ctx
+        return ctx, weights
 
-    def forward(self, q1, q2):
+    def forward(self, q1, q2, return_weights=False):
         h1 = self.proj(self._encode(q1))
         h2 = self.proj(self._encode(q2))
         dist = F.pairwise_distance(h1, h2, p=2)
