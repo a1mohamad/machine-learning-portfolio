@@ -10,13 +10,13 @@ class ModelConfig:
     FREEZE_TOKEN_EMBEDDING = True
     TOKEN_EMBEDDING = "gloVe-6B-100d"
     EMB_DIM = 100
-    EMB_DP = 0.2
+    EMB_DP = 0.0
     # Model
     LOSS = "Consrative Loss"
     BIDIRECTIONAL = True
-    DROPOUT = 0.5
-    HIDDEN_DIM = 256
-    ATTENTION_DROPOUT = 0.2
+    DROPOUT = 0.3
+    HIDDEN_DIM = 384
+    ATTENTION_DROPOUT = 0.0
     LAYER_NORM_LSTM = False
     LAYER_NORM_ATTENTION = True
     ATTENTION_PROJECTION = False
@@ -112,8 +112,7 @@ class QuoraSiameseClassifier(nn.Module):
     def forward(self, q1, q2, return_weights=False):
         h1, w1 = self._encode(q1)
         h2, w2 = self._encode(q2)
-        h1 = self.proj(h1), self.proj(h2)
-        h2  
+        h1, h2 = self.proj(h1), self.proj(h2) 
         dist = F.pairwise_distance(h1, h2, p=2)
         if return_weights:
             return dist, (w1, w2)
