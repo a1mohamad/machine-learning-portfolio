@@ -61,12 +61,12 @@
     "scheduler_threshold_mode": "rel",
     "scheduler_mode": "min",
     "train_test_split": 0.9,
-    "unfreeze_epoch": null,
+    "unfreeze_epoch": 3,
     "weight_decay": 0.0005
   },
   "model": {
     "model_type": "LSTM_attention",
-    "attention_type": "OneHead-Bahdanau",
+    "attention_type": "MultiHead-Bahdanau",
     "layer_norm_emb": true,
     "freeze_token_embedding": true,
     "token_embedding": "gloVe-6B-100d",
@@ -76,12 +76,12 @@
     "num_heads": 4,
     "bidirectional": true,
     "dropout": 0.3,
-    "hidden_dim": 256,
+    "hidden_dim": 384,
     "attention_dropout": 0.0,
     "layer_norm_lstm": false,
-    "layer_norm_attention": true,
+    "layer_norm_attention": false,
     "attention_projection": false,
-    "margin": 1.0,
+    "margin": 1.5,
     "mask_fill_num": -10000000000.0,
     "siamese_similarity_parm": [
       "Euclidean Distance"

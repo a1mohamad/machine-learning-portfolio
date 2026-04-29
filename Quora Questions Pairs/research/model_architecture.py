@@ -4,7 +4,7 @@ import torch.nn.functional as F
 
 class ModelConfig:
     MODEL_TYPE = "LSTM_attention"
-    ATTENTION_TYPE = "OneHead-Bahdanau"
+    ATTENTION_TYPE = "MultiHead-Bahdanau"
     # Embedding
     LAYER_NORM_EMB = True
     FREEZE_TOKEN_EMBEDDING = True
@@ -16,14 +16,14 @@ class ModelConfig:
     NUM_HEADS = 4
     BIDIRECTIONAL = True
     DROPOUT = 0.3
-    HIDDEN_DIM = 256
+    HIDDEN_DIM = 384
     ATTENTION_DROPOUT = 0.0
     LAYER_NORM_LSTM = False
-    LAYER_NORM_ATTENTION = True
+    LAYER_NORM_ATTENTION = False
     ATTENTION_PROJECTION = False
     if ATTENTION_PROJECTION:
         PROJECT_DIM = HIDDEN_DIM // 2
-    MARGIN = 1.0
+    MARGIN = 1.5
     MASK_FILL_NUM = -1e10
     SIAMESE_SIMILARITY_PARM = ["Euclidean Distance"]
     NUM_LAYERS = 2
