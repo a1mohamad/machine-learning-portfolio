@@ -73,6 +73,7 @@
     "emb_dim": 100,
     "emb_dp": 0.0,
     "loss": "Consrative Loss",
+    "num_heads": 4,
     "bidirectional": true,
     "dropout": 0.3,
     "hidden_dim": 256,
