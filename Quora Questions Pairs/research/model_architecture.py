@@ -6,7 +6,7 @@ class ModelConfig:
     MODEL_TYPE = "LSTM_attention"
     ATTENTION_TYPE = "MultiHead-Bahdanau"
     # Embedding
-    LAYER_NORM_EMB = False
+    LAYER_NORM_EMB = True
     FREEZE_TOKEN_EMBEDDING = True
     TOKEN_EMBEDDING = "gloVe-6B-100d"
     EMB_DIM = 100
@@ -23,7 +23,7 @@ class ModelConfig:
     ATTENTION_PROJECTION = False
     if ATTENTION_PROJECTION:
         PROJECT_DIM = HIDDEN_DIM // 2
-    MARGIN = 2.0
+    MARGIN = 1.0
     MASK_FILL_NUM = -1e10
     SIAMESE_SIMILARITY_PARM = ["Euclidean Distance"]
     NUM_LAYERS = 2
