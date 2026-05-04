@@ -76,26 +76,28 @@
     "num_heads": 4,
     "bidirectional": true,
     "dropout": 0.3,
-    "hidden_dim": 512,
-    "lstm_out": 1024,
+    "hidden_dim": 256,
+    "lstm_out": 512,
     "attention_dropout": 0.0,
     "layer_norm_lstm": false,
     "layer_norm_attention": false,
     "attention_projection": false,
+    "enc_dim": 512,
+    "label_smoothing": 0.05,
     "fc_dims": [
       1024,
-      512
+      256
     ],
     "fc_dp": 0.5,
     "siamese_similarity_parm": [
       "Encoded Q1",
       "Encoded Q2",
-      "Dot Product Q1, Q2",
+      "Multiplication Q1, Q2",
       "Abs Subtract Q1, Q2",
       "Cosine Similarity"
     ],
     "multiple_fc_param": 4,
-    "input_fc_dim": 4097,
+    "input_fc_dim": 2049,
     "mask_fill_num": -10000000000.0,
     "num_layers": 2,
     "skip_connection": false
