@@ -23,14 +23,12 @@ class ModelConfig:
     LAYER_NORM_ATTENTION = False
     ATTENTION_PROJECTION = False
     if ATTENTION_PROJECTION:
-        ENC_DIM = PROJECT_DIM
-    else:
-        ENC_DIM = LSTM_OUT
-    if ATTENTION_PROJECTION:
         PROJECT_DIM = HIDDEN_DIM // 2
+    ENC_DIM = PROJECT_DIM if ATTENTION_PROJECTION else LSTM_OUT
     if LOSS == "Contrastive Loss":
         MARGIN = 1.0
     elif LOSS == "BCE with Logits":
+        LABEL_SMOOTHING = 0.05
         FC_DIMS = [1024, 256]
         FC_DP = 0.5
         SIAMESE_SIMILARITY_PARM = ["Encoded Q1", "Encoded Q2", "Multiplication Q1, Q2", "Abs Subtract Q1, Q2", "Cosine Similarity"]
@@ -125,7 +123,7 @@ class QuoraSiameseClassifier(nn.Module):
             dropout=config.FC_DP
         )
 
-    def _build_fc_layers(input_dim, fc_dims, dropout):
+    def _build_fc_layers(self, input_dim, fc_dims, dropout):
         layers = []
         for dim in fc_dims:
             layers += [
