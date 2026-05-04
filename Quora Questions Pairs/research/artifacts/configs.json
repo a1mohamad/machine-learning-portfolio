@@ -76,19 +76,19 @@
     "num_heads": 4,
     "bidirectional": true,
     "dropout": 0.3,
-    "hidden_dim": 256,
-    "lstm_out": 512,
+    "hidden_dim": 384,
+    "lstm_out": 768,
     "attention_dropout": 0.0,
     "layer_norm_lstm": false,
     "layer_norm_attention": false,
     "attention_projection": false,
-    "enc_dim": 512,
+    "enc_dim": 768,
     "label_smoothing": 0.05,
     "fc_dims": [
       1024,
       256
     ],
-    "fc_dp": 0.5,
+    "fc_dp": 0.4,
     "siamese_similarity_parm": [
       "Encoded Q1",
       "Encoded Q2",
@@ -97,7 +97,7 @@
       "Cosine Similarity"
     ],
     "multiple_fc_param": 4,
-    "input_fc_dim": 2049,
+    "input_fc_dim": 3073,
     "mask_fill_num": -10000000000.0,
     "num_layers": 2,
     "skip_connection": false

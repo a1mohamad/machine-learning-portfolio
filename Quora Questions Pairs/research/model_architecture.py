@@ -16,7 +16,7 @@ class ModelConfig:
     NUM_HEADS = 4
     BIDIRECTIONAL = True
     DROPOUT = 0.3
-    HIDDEN_DIM = 256
+    HIDDEN_DIM = 384
     LSTM_OUT = HIDDEN_DIM*(2 if BIDIRECTIONAL else 1)
     ATTENTION_DROPOUT = 0.0
     LAYER_NORM_LSTM = False
@@ -30,7 +30,7 @@ class ModelConfig:
     elif LOSS == "BCE with Logits":
         LABEL_SMOOTHING = 0.05
         FC_DIMS = [1024, 256]
-        FC_DP = 0.5
+        FC_DP = 0.4
         SIAMESE_SIMILARITY_PARM = ["Encoded Q1", "Encoded Q2", "Multiplication Q1, Q2", "Abs Subtract Q1, Q2", "Cosine Similarity"]
         MULTIPLE_FC_PARAM = sum(1 for param in SIAMESE_SIMILARITY_PARM
                      if "Q1" in param or "Q2" in param)
@@ -163,7 +163,7 @@ class QuoraSiameseClassifier(nn.Module):
         feat = torch.cat([h1, h2, abs(h1 - h2), h1*h2, cosine_sim], dim=1)
         logits = self.fc_dims(feat)
         
-        return logits
+        return logits.squeeze(-1)
 
 class QuoraSiameseClassifier(nn.Module):
     def __init__(self, vocab_size, config=model_cfg, embedding=None, stop_mask=None):
