@@ -41,7 +41,7 @@
     "is_pin_memory": true
   },
   "train": {
-    "loss": "Consrative Loss",
+    "loss": "BCE with Logits",
     "clip_norm": 1.5,
     "early_stop_metric": "loss",
     "checkpoint_metric": "F1Score",
@@ -72,19 +72,26 @@
     "token_embedding": "gloVe-6B-100d",
     "emb_dim": 100,
     "emb_dp": 0.0,
-    "loss": "Consrative Loss",
+    "loss": "BCE with Logits",
     "num_heads": 4,
     "bidirectional": true,
     "dropout": 0.3,
-    "hidden_dim": 512,
+    "hidden_dim": 256,
     "attention_dropout": 0.0,
     "layer_norm_lstm": false,
     "layer_norm_attention": false,
     "attention_projection": false,
-    "margin": 1.0,
+    "fc_dims": [
+      1024,
+      512
+    ],
     "mask_fill_num": -10000000000.0,
     "siamese_similarity_parm": [
-      "Euclidean Distance"
+      "Encoded Q1",
+      "Encoded Q2",
+      "Dot Product Q1, Q2",
+      "Abs Subtract Q1, Q2",
+      "Cosine Similarity"
     ],
     "num_layers": 2,
     "skip_connection": false
