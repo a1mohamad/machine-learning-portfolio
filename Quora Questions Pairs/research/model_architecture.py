@@ -23,16 +23,20 @@ class ModelConfig:
     LAYER_NORM_ATTENTION = False
     ATTENTION_PROJECTION = False
     if ATTENTION_PROJECTION:
+        ENC_DIM = PROJECT_DIM
+    else:
+        ENC_DIM = LSTM_OUT
+    if ATTENTION_PROJECTION:
         PROJECT_DIM = HIDDEN_DIM // 2
     if LOSS == "Contrastive Loss":
         MARGIN = 1.0
     elif LOSS == "BCE with Logits":
         FC_DIMS = [1024, 256]
         FC_DP = 0.5
-        SIAMESE_SIMILARITY_PARM = ["Encoded Q1", "Encoded Q2", "Dot Product Q1, Q2", "Abs Subtract Q1, Q2", "Cosine Similarity"]
+        SIAMESE_SIMILARITY_PARM = ["Encoded Q1", "Encoded Q2", "Multiplication Q1, Q2", "Abs Subtract Q1, Q2", "Cosine Similarity"]
         MULTIPLE_FC_PARAM = sum(1 for param in SIAMESE_SIMILARITY_PARM
                      if "Q1" in param or "Q2" in param)
-        INPUT_FC_DIM = MULTIPLE_FC_PARAM*LSTM_OUT
+        INPUT_FC_DIM = MULTIPLE_FC_PARAM * ENC_DIM
         if any("Cosine" in param for param in SIAMESE_SIMILARITY_PARM):
             INPUT_FC_DIM += 1
     MASK_FILL_NUM = -1e10
@@ -115,13 +119,24 @@ class QuoraSiameseClassifier(nn.Module):
             self.proj = nn.Identity()
         
         self.attn_norm = nn.LayerNorm(config.LSTM_OUT)
-        fc_layers = []
-        input_fc_dim = config.INPUT_FC_DIM
-        for dim in config.FC_DIMS:
-            fc_layers += [nn.Linear(input_fc_dim, dim), nn.GELU(), nn.Dropout(config.FC_DP)]
-            input_fc_dim = dim
-        self.fc_dims = nn.Sequential(*fc_layers)
+        self.fc_dims = self._build_fc_layers(
+            input_dim=config.INPUT_FC_DIM,
+            fc_dims=config.FC_DIMS,
+            dropout=config.FC_DP
+        )
 
+    def _build_fc_layers(input_dim, fc_dims, dropout):
+        layers = []
+        for dim in fc_dims:
+            layers += [
+                nn.Linear(input_dim, dim),
+                nn.GELU(),
+                nn.Dropout(dropout)
+            ]
+            input_dim = dim
+        layers.append(nn.Linear(input_dim, 1))   # final logit projection
+        return nn.Sequential(*layers)
+    
     def _create_mask(self, question):
         return (question != 0).float()
 
