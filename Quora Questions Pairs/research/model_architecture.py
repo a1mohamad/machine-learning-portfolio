@@ -12,20 +12,30 @@ class ModelConfig:
     EMB_DIM = 100
     EMB_DP = 0.0
     # Model
-    LOSS = "Consrative Loss"
+    LOSS = "BCE with Logits"
     NUM_HEADS = 4
     BIDIRECTIONAL = True
     DROPOUT = 0.3
-    HIDDEN_DIM = 512
+    HIDDEN_DIM = 256
+    LSTM_OUT = HIDDEN_DIM*(2 if BIDIRECTIONAL else 1)
     ATTENTION_DROPOUT = 0.0
     LAYER_NORM_LSTM = False
     LAYER_NORM_ATTENTION = False
     ATTENTION_PROJECTION = False
     if ATTENTION_PROJECTION:
         PROJECT_DIM = HIDDEN_DIM // 2
-    MARGIN = 1.0
+    if LOSS == "Contrastive Loss":
+        MARGIN = 1.0
+    elif LOSS == "BCE with Logits":
+        FC_DIMS = [1024, 256]
+        FC_DP = 0.5
+        SIAMESE_SIMILARITY_PARM = ["Encoded Q1", "Encoded Q2", "Dot Product Q1, Q2", "Abs Subtract Q1, Q2", "Cosine Similarity"]
+        MULTIPLE_FC_PARAM = sum(1 for param in SIAMESE_SIMILARITY_PARM
+                     if "Q1" in param or "Q2" in param)
+        INPUT_FC_DIM = MULTIPLE_FC_PARAM*LSTM_OUT
+        if any("Cosine" in param for param in SIAMESE_SIMILARITY_PARM):
+            INPUT_FC_DIM += 1
     MASK_FILL_NUM = -1e10
-    SIAMESE_SIMILARITY_PARM = ["Euclidean Distance"]
     NUM_LAYERS = 2
     SKIP_CONNECTION = False
     @classmethod
@@ -59,6 +69,20 @@ class AttentionHead(nn.Module):
         context = torch.bmm(weights.unsqueeze(1), masked_proj).squeeze(1)   # [B, proj_dim]
         return context
 
+class MultiHeadAttention(nn.Module):
+    def __init__(self, hidden_dim, num_heads=model_cfg.NUM_HEADS):
+        super().__init__()
+        head_dim = hidden_dim // num_heads
+        self.heads = nn.ModuleList([
+            AttentionHead(hidden_dim, head_dim) for _ in range(num_heads)
+        ])
+        self.out_linear = nn.Linear(head_dim*num_heads, hidden_dim)
+
+    def forward(self, hidden_state, mask):
+        x = torch.cat([h(hidden_state, mask) for h in self.heads], dim=-1)
+        x = self.out_linear(x)
+        return x
+
 class QuoraSiameseClassifier(nn.Module):
     def __init__(self, vocab_size, config=model_cfg, embedding=None, stop_mask=None):
         super().__init__()
@@ -83,14 +107,20 @@ class QuoraSiameseClassifier(nn.Module):
             dropout=config.DROPOUT if config.NUM_LAYERS > 1 else 0.0,
             batch_first=True
         )
-        lstm_output_dim = config.HIDDEN_DIM*(2 if config.BIDIRECTIONAL else 1)
-        self.lstm_norm = nn.LayerNorm(lstm_output_dim)
-        self.attention = MultiHeadAttention(lstm_output_dim)
+        self.lstm_norm = nn.LayerNorm(config.LSTM_OUT)
+        self.attention = MultiHeadAttention(config.LSTM_OUT)
         if config.ATTENTION_PROJECTION:
-            self.proj = nn.Linear(lstm_output_dim, config.PROJECT_DIM)
+            self.proj = nn.Linear(config.LSTM_OUT, config.PROJECT_DIM)
         else:
             self.proj = nn.Identity()
-        self.attn_norm = nn.LayerNorm(lstm_output_dim)
+        
+        self.attn_norm = nn.LayerNorm(config.LSTM_OUT)
+        fc_layers = []
+        input_fc_dim = config.INPUT_FC_DIM
+        for dim in config.FC_DIMS:
+            fc_layers += [nn.Linear(input_fc_dim, dim), nn.GELU(), nn.Dropout(config.FC_DP)]
+            input_fc_dim = dim
+        self.fc_dims = nn.Sequential(*fc_layers)
 
     def _create_mask(self, question):
         return (question != 0).float()
@@ -115,10 +145,12 @@ class QuoraSiameseClassifier(nn.Module):
     def forward(self, q1, q2):
         h1 = self._encode(q1)
         h2 = self._encode(q2)
-        h1, h2 = self.proj(h1), self.proj(h2) 
-        dist = F.pairwise_distance(h1, h2, p=2)
+        h1, h2 = self.proj(h1), self.proj(h2)
+        cosine_sim = F.cosine_similarity(h1, h2).unsqueeze(-1)
+        feat = torch.cat([h1, h2, abs(h1 - h2), h1*h2, cosine_sim])
+        logits = self.fc_dims(feat)
         
-        return dist
+        return logits
 
 class QuoraSiameseClassifier(nn.Module):
     def __init__(self, vocab_size, config=model_cfg, embedding=None, stop_mask=None):

@@ -76,7 +76,8 @@
     "num_heads": 4,
     "bidirectional": true,
     "dropout": 0.3,
-    "hidden_dim": 256,
+    "hidden_dim": 512,
+    "lstm_out": 1024,
     "attention_dropout": 0.0,
     "layer_norm_lstm": false,
     "layer_norm_attention": false,
@@ -86,7 +87,6 @@
       512
     ],
     "fc_dp": 0.5,
-    "mask_fill_num": -10000000000.0,
     "siamese_similarity_parm": [
       "Encoded Q1",
       "Encoded Q2",
@@ -94,6 +94,9 @@
       "Abs Subtract Q1, Q2",
       "Cosine Similarity"
     ],
+    "multiple_fc_param": 4,
+    "input_fc_dim": 4097,
+    "mask_fill_num": -10000000000.0,
     "num_layers": 2,
     "skip_connection": false
   }
