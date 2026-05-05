@@ -49,9 +49,9 @@
     "scheduler_metric": "loss",
     "early_stop_min_delta": 0.0001,
     "early_stop_mode": "min",
-    "early_stop_patience": 3,
+    "early_stop_patience": 2,
     "epochs": 50,
-    "learning_rate": 0.001,
+    "learning_rate": 0.0005,
     "metrics_threshold": 0.5,
     "scheduler_type": "ReduceLROnPlateau",
     "scheduler_factor": 0.5,
@@ -62,7 +62,7 @@
     "scheduler_mode": "min",
     "train_test_split": 0.9,
     "unfreeze_epoch": 3,
-    "weight_decay": 0.0005
+    "weight_decay": 0.001
   },
   "model": {
     "model_type": "LSTM_attention",
@@ -75,7 +75,7 @@
     "loss": "BCE with Logits",
     "num_heads": 4,
     "bidirectional": true,
-    "dropout": 0.3,
+    "dropout": 0.35,
     "hidden_dim": 384,
     "lstm_out": 768,
     "attention_dropout": 0.0,
