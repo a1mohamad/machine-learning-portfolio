@@ -6,7 +6,7 @@ class ModelConfig:
     MODEL_TYPE = "LSTM_attention"
     ATTENTION_TYPE = "MultiHead-Bahdanau"
     # Embedding
-    LAYER_NORM_EMB = True
+    LAYER_NORM_EMB = False
     FREEZE_TOKEN_EMBEDDING = True
     TOKEN_EMBEDDING = "gloVe-6B-100d"
     EMB_DIM = 100
