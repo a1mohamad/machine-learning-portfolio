@@ -4,7 +4,7 @@
     "mlflow_tracking_uri": "sqlite:///C:/Users/98922/Documents/python_scripts/AI/research-notebooks/Quora Questions Pairs/research/mlflow-quora-questions-pairs.db",
     "next_line_counter": 180,
     "seed": 28,
-    "used_scaler": false,
+    "used_scaler": true,
     "device": "cuda"
   },
   "path": {
@@ -42,7 +42,7 @@
   },
   "train": {
     "loss": "BCE with Logits",
-    "clip_norm": 1.5,
+    "clip_norm": 2.0,
     "early_stop_metric": "loss",
     "scheduler_metric": "loss",
     "checkpoint_metric": "F1Score",
@@ -57,7 +57,7 @@
     "scheduler_eta_min": 5e-07,
     "train_test_split": 0.9,
     "unfreeze_epoch": 3,
-    "weight_decay": 0.01
+    "weight_decay": 0.02
   },
   "model": {
     "model_type": "LSTM_attention",
