@@ -37,7 +37,7 @@ class ModelConfig:
         INPUT_FC_DIM = MULTIPLE_FC_PARAM * ENC_DIM
         if any("Cosine" in param for param in SIAMESE_SIMILARITY_PARM):
             INPUT_FC_DIM += 1
-    MASK_FILL_NUM = -1e10
+    MASK_FILL_NUM = float("-inf")
     NUM_LAYERS = 2
     SKIP_CONNECTION = False
     @classmethod

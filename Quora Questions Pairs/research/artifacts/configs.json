@@ -4,7 +4,7 @@
     "mlflow_tracking_uri": "sqlite:///C:/Users/98922/Documents/python_scripts/AI/research-notebooks/Quora Questions Pairs/research/mlflow-quora-questions-pairs.db",
     "next_line_counter": 180,
     "seed": 28,
-    "used_scaler": true,
+    "used_scaler": false,
     "device": "cuda"
   },
   "path": {
@@ -61,7 +61,7 @@
   },
   "model": {
     "model_type": "LSTM_attention",
-    "attention_type": "MultiHead-Bahdanau",
+    "attention_type": "MultiHead-CrossAttention-Bahdanau",
     "layer_norm_emb": false,
     "freeze_token_embedding": true,
     "token_embedding": "gloVe-6B-100d",
@@ -93,7 +93,7 @@
     ],
     "multiple_fc_param": 4,
     "input_fc_dim": 4097,
-    "mask_fill_num": -10000000000.0,
+    "mask_fill_num": -Infinity,
     "num_layers": 2,
     "skip_connection": false
   }
