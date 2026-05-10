@@ -76,10 +76,10 @@ class MultiHeadCrossAttention(nn.Module):
         super().__init__()
         head_dim = hidden_dim // num_heads
         self.heads = nn.ModuleList([
-            AttentionHead(hidden_dim, head_dim) for _ in range(num_heads)
+            CrossAttentionHead(hidden_dim, head_dim) for _ in range(num_heads)
         ])
         self.out_linear = nn.Linear(head_dim*num_heads, hidden_dim)
-        self.norm = nn.Layer_norm(hidden_dim)
+        self.norm = nn.LayerNorm(hidden_dim)
     def forward(self, query, key_value, mask_kv):
         x = torch.cat([h(query, key_value, mask_kv) for h in self.heads], dim=-1)
         x = self.out_linear(x)
