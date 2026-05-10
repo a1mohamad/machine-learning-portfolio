@@ -65,7 +65,7 @@ class CrossAttentionHead(nn.Module):
         V = self.W_v(key_value)
         energy = torch.tanh(Q.unsqueeze(2) + K.unsqueeze(1))
         scores = self.V(energy).squeeze(-1)
-        scores = score.masked_fill(mask_kv == 0, self.mask_fill_num)
+        scores = scores.masked_fill(mask_kv == 0, self.mask_fill_num)
         attn_weights = F.softmax(scores, dim=-1)
         attn_weights = self.dropout(dropout)
         aligned = torch.bmm(attn_weights, V)
@@ -109,15 +109,32 @@ class QuoraSiameseClassifier(nn.Module):
             dropout=config.DROPOUT if config.NUM_LAYERS > 1 else 0.0,
             batch_first=True
         )
-        lstm_output_dim = config.HIDDEN_DIM*(2 if config.BIDIRECTIONAL else 1)
-        self.lstm_norm = nn.LayerNorm(lstm_output_dim)
-        self.attention = MultiHeadAttention(lstm_output_dim)
+        self.lstm_norm = nn.LayerNorm(config.LSTM_OUT)
+        self.attention = MultiHeadCrossAttention(config.LSTM_OUT)
+        self.mean_pool = MaskedMeanPool()
         if config.ATTENTION_PROJECTION:
-            self.proj = nn.Linear(lstm_output_dim, config.PROJECT_DIM)
+            self.proj = nn.Linear(config.LSTM_OUT, config.PROJECT_DIM)
         else:
             self.proj = nn.Identity()
-        self.attn_norm = nn.LayerNorm(lstm_output_dim)
+        
+        self.fc_dims = self._build_fc_layers(
+            input_dim=config.INPUT_FC_DIM,
+            fc_dims=config.FC_DIMS,
+            dropout=config.FC_DP
+        )
 
+    def _build_fc_layers(self, input_dim, fc_dims, dropout):
+        layers = []
+        for dim in fc_dims:
+            layers += [
+                nn.Linear(input_dim, dim),
+                nn.GELU(),
+                nn.Dropout(dropout)
+            ]
+            input_dim = dim
+        layers.append(nn.Linear(input_dim, 1))   # final logit projection
+        return nn.Sequential(*layers)
+    
     def _create_mask(self, question):
         return (question != 0).float()
 
@@ -133,40 +150,18 @@ class QuoraSiameseClassifier(nn.Module):
         out, _ = self.LSTM(emb)
         if self.config.LAYER_NORM_LSTM:
             out = self.lstm_norm(out)
-        ctx = self.attention(out, mask)
-        if self.config.LAYER_NORM_ATTENTION:
-            ctx = self.attn_norm(ctx)
-        return ctx
-
-    def _encode_with_attention(self, question):
-        emb = self.embedding(question)
-        if self.config.LAYER_NORM_EMB:
-            emb = self.emb_norm(emb)
-        emb = self.emb_dropout(emb)
-        mask = self._create_mask(question)
-        if self.stop_mask is not None:
-            token_stop_mask = self.stop_mask[question]
-            mask = mask * token_stop_mask.float()
-    
-        out, _ = self.LSTM(emb)
-        if self.config.LAYER_NORM_LSTM:
-            out = self.lstm_norm(out)
-    
-        # Get context and attention weights
-        ctx, attn_weights = self.attention(out, mask, return_weights=True)   # attn_weights: list of [B, L]
-    
-        if self.config.LAYER_NORM_ATTENTION:
-            ctx = self.attn_norm(ctx)
-    
-        # Project (or identity)
-        final = self.proj(ctx)
-    
-        return final, attn_weights, mask
+        return out, mask
 
     def forward(self, q1, q2):
-        h1 = self._encode(q1)
-        h2 = self._encode(q2)
-        h1, h2 = self.proj(h1), self.proj(h2) 
-        dist = F.pairwise_distance(h1, h2, p=2)
+        out1, mask1 = self._encode(q1)
+        out2, mask2 = self._encode(q2)
+        cross1 = self.attention(query=out1, key_value=out2, mask_kv=mask2)
+        cross2 = self.attention(query=out2, key_value=out1, mask_kv=mask1)
+        h1 = self.mean_pool(cross1, mask1)
+        h2 = self.mean_pool(cross2, mask2)
+        h1, h2 = self.proj(h1), self.proj(h2)
+        cosine_sim = F.cosine_similarity(h1, h2).unsqueeze(-1)
+        feat = torch.cat([h1, h2, abs(h1 - h2), h1*h2, cosine_sim], dim=1)
+        logits = self.fc_dims(feat)
         
-        return dist
+        return logits.squeeze(-1)
