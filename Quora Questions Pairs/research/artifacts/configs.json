@@ -74,8 +74,8 @@
     "hidden_dim": 512,
     "lstm_out": 1024,
     "attention_dropout": 0.0,
+    "attention_pooing": "mean",
     "layer_norm_lstm": false,
-    "layer_norm_attention": true,
     "attention_projection": false,
     "enc_dim": 1024,
     "label_smoothing": 0.05,
@@ -93,7 +93,7 @@
     ],
     "multiple_fc_param": 4,
     "input_fc_dim": 4097,
-    "mask_fill_num": -Infinity,
+    "mask_fill_num": -1e-09,
     "num_layers": 2,
     "skip_connection": false
   }
