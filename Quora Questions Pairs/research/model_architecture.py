@@ -66,7 +66,7 @@ class CrossAttentionHead(nn.Module):
         V = self.W_v(key_value)
         energy = torch.tanh(Q.unsqueeze(2) + K.unsqueeze(1))
         scores = self.V(energy).squeeze(-1)
-        scores = scores.masked_fill(mask_kv == 0, self.mask_fill_num)
+        scores = scores.masked_fill(mask_kv.unsqueeze(1) == 0, self.mask_fill_num)
         attn_weights = F.softmax(scores, dim=-1)
         attn_weights = self.dropout(attn_weights)
         aligned = torch.bmm(attn_weights, V)
