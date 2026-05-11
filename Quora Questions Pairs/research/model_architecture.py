@@ -58,6 +58,7 @@ class CrossAttentionHead(nn.Module):
         self.W_v = nn.Linear(hidden_dim, proj_dim)
         self.V = nn.Linear(proj_dim, 1, bias=False)
         self.dropout = nn.Dropout(dropout)
+        self.mask_fill_num = mask_fill_num
 
     def forward(self, query, key_value, mask_kv):
         Q = self.W_q(query)
@@ -67,7 +68,7 @@ class CrossAttentionHead(nn.Module):
         scores = self.V(energy).squeeze(-1)
         scores = scores.masked_fill(mask_kv == 0, self.mask_fill_num)
         attn_weights = F.softmax(scores, dim=-1)
-        attn_weights = self.dropout(dropout)
+        attn_weights = self.dropout(attn_weights)
         aligned = torch.bmm(attn_weights, V)
         return aligned
 
