@@ -15,8 +15,8 @@ class ModelConfig:
     LOSS = "BCE with Logits"
     NUM_HEADS = 4
     BIDIRECTIONAL = True
-    DROPOUT = 0.5
-    HIDDEN_DIM = 512
+    DROPOUT = 0.3
+    HIDDEN_DIM = 256
     LSTM_OUT = HIDDEN_DIM*(2 if BIDIRECTIONAL else 1)
     ATTENTION_DROPOUT = 0.0
     ATTENTION_POOING = "mean"
@@ -29,7 +29,7 @@ class ModelConfig:
         MARGIN = 1.0
     elif LOSS == "BCE with Logits":
         LABEL_SMOOTHING = 0.05
-        FC_DIMS = [2048, 512]
+        FC_DIMS = [1024, 512]
         FC_DP = 0.5
         SIAMESE_SIMILARITY_PARM = ["Encoded Q1", "Encoded Q2", "Multiplication Q1, Q2", "Abs Subtract Q1, Q2", "Cosine Similarity"]
         MULTIPLE_FC_PARAM = sum(1 for param in SIAMESE_SIMILARITY_PARM
