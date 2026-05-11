@@ -42,7 +42,7 @@
   },
   "train": {
     "loss": "BCE with Logits",
-    "clip_norm": 2.0,
+    "clip_norm": 1.5,
     "early_stop_metric": "loss",
     "scheduler_metric": "loss",
     "checkpoint_metric": "F1Score",
@@ -57,7 +57,7 @@
     "scheduler_eta_min": 5e-07,
     "train_test_split": 0.9,
     "unfreeze_epoch": 3,
-    "weight_decay": 0.02
+    "weight_decay": 0.005
   },
   "model": {
     "model_type": "LSTM_attention",
@@ -70,17 +70,17 @@
     "loss": "BCE with Logits",
     "num_heads": 4,
     "bidirectional": true,
-    "dropout": 0.5,
-    "hidden_dim": 512,
-    "lstm_out": 1024,
+    "dropout": 0.3,
+    "hidden_dim": 256,
+    "lstm_out": 512,
     "attention_dropout": 0.0,
     "attention_pooing": "mean",
     "layer_norm_lstm": false,
     "attention_projection": false,
-    "enc_dim": 1024,
+    "enc_dim": 512,
     "label_smoothing": 0.05,
     "fc_dims": [
-      2048,
+      1024,
       512
     ],
     "fc_dp": 0.5,
@@ -92,7 +92,7 @@
       "Cosine Similarity"
     ],
     "multiple_fc_param": 4,
-    "input_fc_dim": 4097,
+    "input_fc_dim": 2049,
     "mask_fill_num": -10000000000.0,
     "num_layers": 2,
     "skip_connection": false
