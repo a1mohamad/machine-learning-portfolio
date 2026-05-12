@@ -15,8 +15,8 @@ class ModelConfig:
     LOSS = "BCE with Logits"
     NUM_HEADS = 4
     BIDIRECTIONAL = True
-    DROPOUT = 0.3
-    HIDDEN_DIM = 256
+    DROPOUT = 0.4
+    HIDDEN_DIM = 384
     LSTM_OUT = HIDDEN_DIM*(2 if BIDIRECTIONAL else 1)
     ATTENTION_DROPOUT = 0.0
     ATTENTION_POOING = "mean"
