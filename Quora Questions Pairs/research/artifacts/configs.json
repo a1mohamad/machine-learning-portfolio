@@ -70,14 +70,14 @@
     "loss": "BCE with Logits",
     "num_heads": 4,
     "bidirectional": true,
-    "dropout": 0.5,
-    "hidden_dim": 512,
-    "lstm_out": 1024,
+    "dropout": 0.4,
+    "hidden_dim": 384,
+    "lstm_out": 768,
     "attention_dropout": 0.0,
     "attention_pooing": "mean",
     "layer_norm_lstm": false,
     "attention_projection": false,
-    "enc_dim": 1024,
+    "enc_dim": 768,
     "label_smoothing": 0.05,
     "fc_dims": [
       1024,
@@ -92,7 +92,7 @@
       "Cosine Similarity"
     ],
     "multiple_fc_param": 4,
-    "input_fc_dim": 4097,
+    "input_fc_dim": 3073,
     "mask_fill_num": -10000000000.0,
     "num_layers": 2,
     "skip_connection": false
