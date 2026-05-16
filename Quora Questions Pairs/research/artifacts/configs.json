@@ -62,6 +62,7 @@
   "model": {
     "model_type": "LSTM_attention",
     "attention_type": "MultiHead-CrossAttention-Bahdanau",
+    "pooling_type": "Self-Attentive",
     "layer_norm_emb": false,
     "freeze_token_embedding": true,
     "token_embedding": "gloVe-6B-100d",
@@ -71,13 +72,13 @@
     "num_heads": 4,
     "bidirectional": true,
     "dropout": 0.4,
-    "hidden_dim": 384,
-    "lstm_out": 768,
+    "hidden_dim": 256,
+    "lstm_out": 512,
     "attention_dropout": 0.0,
     "attention_pooing": "mean",
     "layer_norm_lstm": false,
     "attention_projection": false,
-    "enc_dim": 768,
+    "enc_dim": 512,
     "label_smoothing": 0.05,
     "fc_dims": [
       1024,
@@ -92,7 +93,7 @@
       "Cosine Similarity"
     ],
     "multiple_fc_param": 4,
-    "input_fc_dim": 3073,
+    "input_fc_dim": 2049,
     "mask_fill_num": -10000000000.0,
     "num_layers": 2,
     "skip_connection": false
