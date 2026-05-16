@@ -143,7 +143,7 @@ class QuoraSiameseClassifier(nn.Module):
         )
         self.lstm_norm = nn.LayerNorm(config.LSTM_OUT)
         self.attention = MultiHeadCrossAttention(config.LSTM_OUT)
-        self.attn_pool = S
+        self.attn_pool = SelfAttentivePooling(config.LSTM_OUT, config.LSTM_OUT)
         if config.ATTENTION_PROJECTION:
             self.proj = nn.Linear(config.LSTM_OUT, config.PROJECT_DIM)
         else:
@@ -189,8 +189,8 @@ class QuoraSiameseClassifier(nn.Module):
         out2, mask2 = self._encode(q2)
         cross1 = self.attention(query=out1, key_value=out2, mask_kv=mask2)
         cross2 = self.attention(query=out2, key_value=out1, mask_kv=mask1)
-        h1 = self.mean_pool(cross1, mask1)
-        h2 = self.mean_pool(cross2, mask2)
+        h1 = self.attn_pool(cross1, mask1)
+        h2 = self.attn_pool(cross2, mask2)
         h1, h2 = self.proj(h1), self.proj(h2)
         cosine_sim = F.cosine_similarity(h1, h2).unsqueeze(-1)
         feat = torch.cat([h1, h2, abs(h1 - h2), h1*h2, cosine_sim], dim=1)
