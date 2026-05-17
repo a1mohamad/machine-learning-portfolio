@@ -114,7 +114,7 @@ class SelfAttentivePooling(nn.Module):
         self.attention = SelfAttentionHead(hidden_dim, proj_dim)
 
     def forward(self, x, mask):
-        context = self.attention(hidden_dim, proj_dim)
+        context = self.attention(x, mask)
         return context
 
 class QuoraSiameseClassifier(nn.Module):
