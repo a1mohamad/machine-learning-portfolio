@@ -2,74 +2,74 @@ import torch
 import torch.nn as nn
 import torch.nn.functional as F
 
+import inspect
+
 class ModelConfig:
     MODEL_TYPE = "LSTM_attention"
-    ATTENTION_TYPE = "MultiHead-CrossAttention-Bahdanau"
-    POOLING_TYPE = "Self-Attentive"
+    ATTENTION_TYPE = "Self+CrossAttn-MultiHead"
+    USE_SELF_ATTENTION = True
+
+    NUM_HEADS = 4                                     
+    SELF_ATTENTION_NUM_HEADS = NUM_HEADS
+    CROSS_ATTENTION_NUM_HEADS = NUM_HEADS
+
+    ATTENTION_DROPOUT = 0.0
+    POOLING_TYPE = "MaskedMean"
+
     # Embedding
     LAYER_NORM_EMB = False
     FREEZE_TOKEN_EMBEDDING = True
     TOKEN_EMBEDDING = "gloVe-6B-100d"
     EMB_DIM = 100
     EMB_DP = 0.0
+
     # Model
     LOSS = "BCE with Logits"
-    NUM_HEADS = 4
     BIDIRECTIONAL = True
     DROPOUT = 0.4
     HIDDEN_DIM = 256
-    LSTM_OUT = HIDDEN_DIM*(2 if BIDIRECTIONAL else 1)
-    ATTENTION_DROPOUT = 0.0
-    ATTENTION_POOING = "mean"
+    LSTM_OUT = HIDDEN_DIM * (2 if BIDIRECTIONAL else 1)
+
     LAYER_NORM_LSTM = False
     ATTENTION_PROJECTION = False
     if ATTENTION_PROJECTION:
         PROJECT_DIM = HIDDEN_DIM // 2
     ENC_DIM = PROJECT_DIM if ATTENTION_PROJECTION else LSTM_OUT
+
+    # Loss specific settings
     if LOSS == "Contrastive Loss":
         MARGIN = 1.0
     elif LOSS == "BCE with Logits":
         LABEL_SMOOTHING = 0.05
         FC_DIMS = [1024, 512]
         FC_DP = 0.5
-        SIAMESE_SIMILARITY_PARM = ["Encoded Q1", "Encoded Q2", "Multiplication Q1, Q2", "Abs Subtract Q1, Q2", "Cosine Similarity"]
-        MULTIPLE_FC_PARAM = sum(1 for param in SIAMESE_SIMILARITY_PARM
-                     if "Q1" in param or "Q2" in param)
+        SIAMESE_SIMILARITY_PARAM = [
+            "Encoded Q1",
+            "Encoded Q2",
+            "Multiplication Q1, Q2",
+            "Abs Subtract Q1, Q2",
+            "Cosine Similarity",
+        ]
+        MULTIPLE_FC_PARAM = sum(
+            1 for param in SIAMESE_SIMILARITY_PARAM
+            if "Q1" in param or "Q2" in param
+        )
         INPUT_FC_DIM = MULTIPLE_FC_PARAM * ENC_DIM
-        if any("Cosine" in param for param in SIAMESE_SIMILARITY_PARM):
+        if any("Cosine" in param for param in SIAMESE_SIMILARITY_PARAM):
             INPUT_FC_DIM += 1
+
     MASK_FILL_NUM = -1e10
     NUM_LAYERS = 2
     SKIP_CONNECTION = False
+
     @classmethod
     def to_dict(cls):
         return {
             k.lower(): v for k, v in cls.__dict__.items()
             if not k.startswith("_")
-            and not inspect.isroutine(v)   # functions, methods
+            and not inspect.isroutine(v)
             and not isinstance(v, (classmethod, staticmethod))
         }
-
-class SelfAttentionHead(nn.Module):
-    def __init__(self, hidden_dim, proj_dim, mask_fill_num=model_cfg.MASK_FILL_NUM,
-                 dropout=model_cfg.ATTENTION_DROPOUT):
-        super().__init__()
-        self.W = nn.Linear(hidden_dim, proj_dim)           
-        self.V = nn.Linear(proj_dim, 1, bias=False)
-        self.mask_fill_num = mask_fill_num
-        self.dropout = nn.Dropout(dropout)
-
-    def forward(self, lstm_output, mask):
-        proj = self.W(lstm_output)                        
-        energy = torch.tanh(proj)
-        scores = self.V(energy).squeeze(-1)
-        scores = scores.masked_fill(mask == 0, self.mask_fill_num)
-        weights = F.softmax(scores, dim=-1)
-        weights = self.dropout(weights)
-
-        masked_proj = proj * mask.unsqueeze(-1)
-        context = torch.bmm(weights.unsqueeze(1), masked_proj).squeeze(1)
-        return context
 
 class CrossAttentionHead(nn.Module):
     def __init__(self, hidden_dim, proj_dim, mask_fill_num=model_cfg.MASK_FILL_NUM,
@@ -95,7 +95,7 @@ class CrossAttentionHead(nn.Module):
         return aligned
 
 class MultiHeadCrossAttention(nn.Module):
-    def __init__(self, hidden_dim, num_heads=model_cfg.NUM_HEADS):
+    def __init__(self, hidden_dim, num_heads=model_cfg.CROSS_ATTENTION_NUM_HEADS):
         super().__init__()
         head_dim = hidden_dim // num_heads
         self.heads = nn.ModuleList([
@@ -108,11 +108,20 @@ class MultiHeadCrossAttention(nn.Module):
         x = self.out_linear(x)
         return self.norm(query + x)
 
+class MaskedMeanPool(nn.Module):
+    def __init__(self):
+        super().__init__()
+    
+    def forward(self, x, mask):
+        lengths = mask.sum(dim=1, keepdim=True).clamp(min=1)
+        pooled = (x * mask.unsqueeze(-1)).sum(dim=1) / lengths
+        return pooled
+
 class SelfAttentivePooling(nn.Module):
     def __init__(self, hidden_dim, proj_dim):
         super().__init__()
         self.attention = SelfAttentionHead(hidden_dim, proj_dim)
-
+        
     def forward(self, x, mask):
         context = self.attention(x, mask)
         return context
@@ -142,8 +151,17 @@ class QuoraSiameseClassifier(nn.Module):
             batch_first=True
         )
         self.lstm_norm = nn.LayerNorm(config.LSTM_OUT)
-        self.attention = MultiHeadCrossAttention(config.LSTM_OUT)
-        self.attn_pool = SelfAttentivePooling(config.LSTM_OUT, config.LSTM_OUT)
+        self.self_attention = MultiHeadCrossAttention(
+            config.LSTM_OUT, num_heads=config.SELF_ATTENTION_NUM_HEADS
+        )
+        self.cross_attention = MultiHeadCrossAttention(config.LSTM_OUT)
+        if config.POOLING_TYPE == "MaskedMean":
+            self.pool = MaskedMeanPool()
+        elif config.POOLING_TYPE == "Self-Additive":
+            self.pool = SelfAttentivePooling(config.LSTM_OUT, config.LSTM_OUT)
+        else:
+            ValueError(f"Unknown pooling type: {config.POOLING_TYPE}")
+        
         if config.ATTENTION_PROJECTION:
             self.proj = nn.Linear(config.LSTM_OUT, config.PROJECT_DIM)
         else:
@@ -187,10 +205,12 @@ class QuoraSiameseClassifier(nn.Module):
     def forward(self, q1, q2):
         out1, mask1 = self._encode(q1)
         out2, mask2 = self._encode(q2)
-        cross1 = self.attention(query=out1, key_value=out2, mask_kv=mask2)
-        cross2 = self.attention(query=out2, key_value=out1, mask_kv=mask1)
-        h1 = self.attn_pool(cross1, mask1)
-        h2 = self.attn_pool(cross2, mask2)
+        out1 = self.self_attention(out1, out1, mask1)
+        out2 = self.self_attention(out2, out2, mask2)
+        cross1 = self.cross_attention(query=out1, key_value=out2, mask_kv=mask2)
+        cross2 = self.cross_attention(query=out2, key_value=out1, mask_kv=mask1)
+        h1 = self.pool(cross1, mask1)
+        h2 = self.pool(cross2, mask2)
         h1, h2 = self.proj(h1), self.proj(h2)
         cosine_sim = F.cosine_similarity(h1, h2).unsqueeze(-1)
         feat = torch.cat([h1, h2, abs(h1 - h2), h1*h2, cosine_sim], dim=1)
