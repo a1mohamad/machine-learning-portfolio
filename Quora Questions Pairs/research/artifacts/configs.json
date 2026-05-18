@@ -61,8 +61,10 @@
   },
   "model": {
     "model_type": "LSTM_attention",
-    "attention_type": "Self+CrossAttn-MultiHead",
+    "attention_type": "MultiHead-CrossAttention-Bahdanau",
+    "cnn_place": "After-LSTM",
     "use_self_attention": true,
+    "cnn_kernel_size": 3,
     "num_heads": 4,
     "self_attention_num_heads": 4,
     "cross_attention_num_heads": 4,
