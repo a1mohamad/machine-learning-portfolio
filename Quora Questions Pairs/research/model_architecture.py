@@ -2,11 +2,10 @@ import torch
 import torch.nn as nn
 import torch.nn.functional as F
 
-import inspect
-
 class ModelConfig:
     MODEL_TYPE = "LSTM_attention"
-    ATTENTION_TYPE = "Self+CrossAttn-MultiHead"
+    ATTENTION_TYPE = "MultiHead-CrossAttention-Bahdanau"
+    CNN_PLACE = "After-LSTM"
     USE_SELF_ATTENTION = True
 
     NUM_HEADS = 4                                     
@@ -16,6 +15,8 @@ class ModelConfig:
     ATTENTION_DROPOUT = 0.0
     POOLING_TYPE = "MaskedMean"
 
+    CNN_KERNEL_SIZE = 3
+    
     # Embedding
     LAYER_NORM_EMB = False
     FREEZE_TOKEN_EMBEDDING = True
@@ -150,10 +151,8 @@ class QuoraSiameseClassifier(nn.Module):
             dropout=config.DROPOUT if config.NUM_LAYERS > 1 else 0.0,
             batch_first=True
         )
+        
         self.lstm_norm = nn.LayerNorm(config.LSTM_OUT)
-        self.self_attention = MultiHeadCrossAttention(
-            config.LSTM_OUT, num_heads=config.SELF_ATTENTION_NUM_HEADS
-        )
         self.cross_attention = MultiHeadCrossAttention(config.LSTM_OUT)
         if config.POOLING_TYPE == "MaskedMean":
             self.pool = MaskedMeanPool()
@@ -205,8 +204,6 @@ class QuoraSiameseClassifier(nn.Module):
     def forward(self, q1, q2):
         out1, mask1 = self._encode(q1)
         out2, mask2 = self._encode(q2)
-        out1 = self.self_attention(out1, out1, mask1)
-        out2 = self.self_attention(out2, out2, mask2)
         cross1 = self.cross_attention(query=out1, key_value=out2, mask_kv=mask2)
         cross2 = self.cross_attention(query=out2, key_value=out1, mask_kv=mask1)
         h1 = self.pool(cross1, mask1)
