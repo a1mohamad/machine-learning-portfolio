@@ -69,7 +69,7 @@
     "cross_attention_num_heads": 4,
     "attention_dropout": 0.0,
     "pooling_type": "MaskedMean",
-    "cnn_kernel_size": [
+    "cnn_kernel_sizes": [
       2,
       3,
       5
