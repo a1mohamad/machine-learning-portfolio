@@ -69,7 +69,11 @@
     "cross_attention_num_heads": 4,
     "attention_dropout": 0.0,
     "pooling_type": "MaskedMean",
-    "cnn_kernel_size": 3,
+    "cnn_kernel_size": [
+      2,
+      3,
+      5
+    ],
     "layer_norm_emb": false,
     "freeze_token_embedding": true,
     "token_embedding": "gloVe-6B-100d",
