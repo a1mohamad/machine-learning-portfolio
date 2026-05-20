@@ -74,6 +74,7 @@
       3,
       5
     ],
+    "cnn_dropout": 0.1,
     "layer_norm_emb": false,
     "freeze_token_embedding": true,
     "token_embedding": "gloVe-6B-100d",
