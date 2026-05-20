@@ -15,7 +15,8 @@ class ModelConfig:
     ATTENTION_DROPOUT = 0.0
     POOLING_TYPE = "MaskedMean"
 
-    CNN_KERNEL_SIZE = 3
+    CNN_KERNEL_SIZES = [2, 3, 5]
+    CNN_DROPOUT = 0.1
     
     # Embedding
     LAYER_NORM_EMB = False
@@ -109,6 +110,23 @@ class MultiHeadCrossAttention(nn.Module):
         x = self.out_linear(x)
         return self.norm(query + x)
 
+class CNN(nn.Module):
+    def __init__(self, in_channels, out_channels, kernels, dropout):
+        super().__init__()
+        self.convs = nn.ModuleList([
+            nn.Conv1d(in_channels, out_channels, k, padding='same')
+            for k in kernels
+        ])
+        self.activation = nn.GELU()
+        self.dropout = nn.Dropout(dropout)
+        self.proj = nn.Conv1d(out_channels*len(kernels), out_channels, kernel_size=1)
+
+    def forward(self, x):
+        convs_out = [self.dropout(self.activation(conv(x))) for conv in self.convs]
+        x = torch.cat(convs_out, dim=1)
+        x = self.proj(x)
+        return x
+
 class MaskedMeanPool(nn.Module):
     def __init__(self):
         super().__init__()
@@ -151,7 +169,11 @@ class QuoraSiameseClassifier(nn.Module):
             dropout=config.DROPOUT if config.NUM_LAYERS > 1 else 0.0,
             batch_first=True
         )
-        
+        self.cnn = CNN(
+            in_channels=model_cfg.LSTM_OUT,
+            out_channels=model_cfg.LSTM_OUT,
+            kernels=model_cfg.CNN_KERNEL_SIZES
+        )
         self.lstm_norm = nn.LayerNorm(config.LSTM_OUT)
         self.cross_attention = MultiHeadCrossAttention(config.LSTM_OUT)
         if config.POOLING_TYPE == "MaskedMean":
@@ -204,6 +226,12 @@ class QuoraSiameseClassifier(nn.Module):
     def forward(self, q1, q2):
         out1, mask1 = self._encode(q1)
         out2, mask2 = self._encode(q2)
+        out1 = out1.transpose(1, 2)            # [batch, LSTM_OUT, seq_len]
+        out1 = self.cnn(out1)                  # [batch, LSTM_OUT, seq_len]
+        out1 = out1.transpose(1, 2)            # [batch, seq_len, LSTM_OUT]
+        out2 = out2.transpose(1, 2)
+        out2 = self.cnn(out2)
+        out2 = out2.transpose(1, 2)
         cross1 = self.cross_attention(query=out1, key_value=out2, mask_kv=mask2)
         cross2 = self.cross_attention(query=out2, key_value=out1, mask_kv=mask1)
         h1 = self.pool(cross1, mask1)
