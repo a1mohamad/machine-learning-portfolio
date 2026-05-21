@@ -62,7 +62,7 @@
   "model": {
     "model_type": "LSTM_attention",
     "attention_type": "MultiHead-CrossAttention-Bahdanau",
-    "cnn_place": "After-LSTM",
+    "cnn_place": "Before-LSTM",
     "use_self_attention": true,
     "num_heads": 4,
     "self_attention_num_heads": 4,
@@ -71,8 +71,7 @@
     "pooling_type": "MaskedMean",
     "cnn_kernel_sizes": [
       2,
-      3,
-      5
+      3
     ],
     "cnn_dropout": 0.1,
     "layer_norm_emb": false,
