@@ -219,7 +219,9 @@ class QuoraSiameseClassifier(nn.Module):
         if self.stop_mask is not None:
             token_stop_mask = self.stop_mask[question]
             mask = mask * token_stop_mask.float()
-        
+        out = torch.transpose(1, 2)
+        out = self.cnn(emb)
+        out = torch.transpose(1, 2)
         out, _ = self.LSTM(emb)
         if self.config.LAYER_NORM_LSTM:
             out = self.lstm_norm(out)
