@@ -5,7 +5,7 @@ import torch.nn.functional as F
 class ModelConfig:
     MODEL_TYPE = "LSTM_attention"
     ATTENTION_TYPE = "MultiHead-CrossAttention-Bahdanau"
-    CNN_PLACE = "After-LSTM"
+    CNN_PLACE = "Before-LSTM"
     USE_SELF_ATTENTION = True
 
     NUM_HEADS = 4                                     
@@ -15,7 +15,7 @@ class ModelConfig:
     ATTENTION_DROPOUT = 0.0
     POOLING_TYPE = "MaskedMean"
 
-    CNN_KERNEL_SIZES = [2, 3, 5]
+    CNN_KERNEL_SIZES = [2, 3]
     CNN_DROPOUT = 0.1
     
     # Embedding
@@ -172,7 +172,8 @@ class QuoraSiameseClassifier(nn.Module):
         self.cnn = CNN(
             in_channels=model_cfg.LSTM_OUT,
             out_channels=model_cfg.LSTM_OUT,
-            kernels=model_cfg.CNN_KERNEL_SIZES
+            kernels=model_cfg.CNN_KERNEL_SIZES,
+            dropout=model_cfg.CNN_DROPOUT
         )
         self.lstm_norm = nn.LayerNorm(config.LSTM_OUT)
         self.cross_attention = MultiHeadCrossAttention(config.LSTM_OUT)
@@ -218,6 +219,7 @@ class QuoraSiameseClassifier(nn.Module):
         if self.stop_mask is not None:
             token_stop_mask = self.stop_mask[question]
             mask = mask * token_stop_mask.float()
+        
         out, _ = self.LSTM(emb)
         if self.config.LAYER_NORM_LSTM:
             out = self.lstm_norm(out)
@@ -226,12 +228,6 @@ class QuoraSiameseClassifier(nn.Module):
     def forward(self, q1, q2):
         out1, mask1 = self._encode(q1)
         out2, mask2 = self._encode(q2)
-        out1 = out1.transpose(1, 2)            # [batch, LSTM_OUT, seq_len]
-        out1 = self.cnn(out1)                  # [batch, LSTM_OUT, seq_len]
-        out1 = out1.transpose(1, 2)            # [batch, seq_len, LSTM_OUT]
-        out2 = out2.transpose(1, 2)
-        out2 = self.cnn(out2)
-        out2 = out2.transpose(1, 2)
         cross1 = self.cross_attention(query=out1, key_value=out2, mask_kv=mask2)
         cross2 = self.cross_attention(query=out2, key_value=out1, mask_kv=mask1)
         h1 = self.pool(cross1, mask1)
