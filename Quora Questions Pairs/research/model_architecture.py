@@ -170,8 +170,8 @@ class QuoraSiameseClassifier(nn.Module):
             batch_first=True
         )
         self.cnn = CNN(
-            in_channels=model_cfg.LSTM_OUT,
-            out_channels=model_cfg.LSTM_OUT,
+            in_channels=model_cfg.EMB_DIM,
+            out_channels=model_cfg.EMB_DIM,
             kernels=model_cfg.CNN_KERNEL_SIZES,
             dropout=model_cfg.CNN_DROPOUT
         )
@@ -219,9 +219,9 @@ class QuoraSiameseClassifier(nn.Module):
         if self.stop_mask is not None:
             token_stop_mask = self.stop_mask[question]
             mask = mask * token_stop_mask.float()
-        out = torch.transpose(1, 2)
-        out = self.cnn(emb)
-        out = torch.transpose(1, 2)
+        emb = emb.transpose(1, 2)
+        emb = self.cnn(emb)
+        emb = emb.transpose(1, 2)
         out, _ = self.LSTM(emb)
         if self.config.LAYER_NORM_LSTM:
             out = self.lstm_norm(out)
