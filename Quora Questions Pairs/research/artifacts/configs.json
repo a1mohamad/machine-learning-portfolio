@@ -62,13 +62,13 @@
   "model": {
     "model_type": "LSTM_attention",
     "attention_type": "ESIM_Style-MultiHead-CrossAttention-Bahdanau",
-    "use_self_attention": true,
     "num_heads": 4,
     "self_attention_num_heads": 4,
     "cross_attention_num_heads": 4,
     "attention_dropout": 0.0,
-    "pooling_type": "MaskedMean",
-    "layer_norm_emb": false,
+    "skip_connection_in_attention": true,
+    "pooling_type": "Average and Max",
+    "emb_norm": false,
     "freeze_token_embedding": true,
     "token_embedding": "gloVe-6B-100d",
     "emb_dim": 100,
@@ -96,7 +96,6 @@
       512
     ],
     "fc_dp": 0.5,
-    "mask_fill_num": -10000000000.0,
-    "skip_connection": false
+    "mask_fill_num": -10000000000.0
   }
 }
