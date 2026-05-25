@@ -86,6 +86,10 @@
     "comp_lstm_norm": false,
     "comp_lstm_dropout": 0.3,
     "comp_lstm_num_layers": 2,
+    "proj_dims": [
+      256
+    ],
+    "proj_dropout": 0.3,
     "label_smoothing": 0.05,
     "fc_dims": [
       1024,
