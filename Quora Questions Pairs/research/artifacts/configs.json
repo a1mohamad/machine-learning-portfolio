@@ -92,8 +92,8 @@
     "proj_dropout": 0.3,
     "label_smoothing": 0.05,
     "fc_dims": [
-      1024,
-      512
+      512,
+      256
     ],
     "fc_dp": 0.5,
     "mask_fill_num": -10000000000.0

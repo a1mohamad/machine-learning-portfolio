@@ -4,18 +4,18 @@ import torch.nn.functional as F
 
 class ModelConfig:
     MODEL_TYPE = "LSTM_attention"
-    ATTENTION_TYPE = "MultiHead-CrossAttention-Bahdanau"
-    USE_SELF_ATTENTION = True
+    ATTENTION_TYPE = "ESIM_Style-MultiHead-CrossAttention-Bahdanau"
 
     NUM_HEADS = 4                                     
     SELF_ATTENTION_NUM_HEADS = NUM_HEADS
     CROSS_ATTENTION_NUM_HEADS = NUM_HEADS
 
     ATTENTION_DROPOUT = 0.0
-    POOLING_TYPE = "MaskedMean"
+    SKIP_CONNECTION_IN_ATTENTION = True
+    POOLING_TYPE = "Average and Max"
     
     # Embedding
-    LAYER_NORM_EMB = False
+    EMB_NORM = False
     FREEZE_TOKEN_EMBEDDING = True
     TOKEN_EMBEDDING = "gloVe-6B-100d"
     EMB_DIM = 100
@@ -23,16 +23,20 @@ class ModelConfig:
 
     # Model
     LOSS = "BCE with Logits"
-    BIDIRECTIONAL = True
-    DROPOUT = 0.4
-    HIDDEN_DIM = 256
-    LSTM_OUT = HIDDEN_DIM * (2 if BIDIRECTIONAL else 1)
-
-    LAYER_NORM_LSTM = False
-    ATTENTION_PROJECTION = False
-    if ATTENTION_PROJECTION:
-        PROJECT_DIM = HIDDEN_DIM // 2
-    ENC_DIM = PROJECT_DIM if ATTENTION_PROJECTION else LSTM_OUT
+    ENHC_LSTM_DROPOUT = 0.4
+    ENHC_LSTM_NUM_LAYERS = 2
+    ENHC_LSTM_DIM = 256
+    ENHC_LSTM_BIDIRECTIONAL = True
+    ENHC_LSTM_OUT = ENHC_LSTM_DIM * (2 if ENHC_LSTM_BIDIRECTIONAL else 1)
+    ENHC_LSTM_NORM = False
+    COMP_LSTM_DIM = 128
+    COMP_LSTM_BIDIRECTIONAL = True
+    COMP_LSTM_OUT = COMP_LSTM_DIM * (2 if COMP_LSTM_BIDIRECTIONAL else 1)
+    COMP_LSTM_NORM = False
+    COMP_LSTM_DROPOUT = 0.3
+    COMP_LSTM_NUM_LAYERS = 2
+    PROJ_DIMS = [256]
+    PROJ_DROPOUT = 0.3
 
     # Loss specific settings
     if LOSS == "Contrastive Loss":
@@ -41,24 +45,8 @@ class ModelConfig:
         LABEL_SMOOTHING = 0.05
         FC_DIMS = [1024, 512]
         FC_DP = 0.5
-        SIAMESE_SIMILARITY_PARAM = [
-            "Encoded Q1",
-            "Encoded Q2",
-            "Multiplication Q1, Q2",
-            "Abs Subtract Q1, Q2",
-            "Cosine Similarity",
-        ]
-        MULTIPLE_FC_PARAM = sum(
-            1 for param in SIAMESE_SIMILARITY_PARAM
-            if "Q1" in param or "Q2" in param
-        )
-        INPUT_FC_DIM = MULTIPLE_FC_PARAM * ENC_DIM
-        if any("Cosine" in param for param in SIAMESE_SIMILARITY_PARAM):
-            INPUT_FC_DIM += 1
 
     MASK_FILL_NUM = -1e10
-    NUM_LAYERS = 2
-    SKIP_CONNECTION = False
 
     @classmethod
     def to_dict(cls):
@@ -106,30 +94,26 @@ class MultiHeadCrossAttention(nn.Module):
         x = self.out_linear(x)
         return self.norm(query + x)
 
-class MaskedMeanPool(nn.Module):
-    def __init__(self):
+class AvgMaxPool(nn.Module):
+    def __init__(self, mask_fill_num=model_cfg.MASK_FILL_NUM):
         super().__init__()
-    
+        self.mask_fill_num = mask_fill_num
+
     def forward(self, x, mask):
         lengths = mask.sum(dim=1, keepdim=True).clamp(min=1)
-        pooled = (x * mask.unsqueeze(-1)).sum(dim=1) / lengths
-        return pooled
+        avg_pool = (x * mask.unsqueeze(-1).sum(dim=1)) / lengths
 
-class SelfAttentivePooling(nn.Module):
-    def __init__(self, hidden_dim, proj_dim):
-        super().__init__()
-        self.attention = SelfAttentionHead(hidden_dim, proj_dim)
-        
-    def forward(self, x, mask):
-        context = self.attention(x, mask)
-        return context
+        x_masked = mask.masked_fill(mask == 0, self.mask_fill_num)
+        max_pool, _ = x_masked.max(dim=1)
+
+        return torch.cat([avg_pool, max_pool], dim=-1)
 
 class QuoraSiameseClassifier(nn.Module):
     def __init__(self, vocab_size, config=model_cfg, embedding=None, stop_mask=None):
         super().__init__()
         self.config = config
         self.embedding = nn.Embedding(vocab_size, config.EMB_DIM)
-        self.emb_norm = nn.LayerNorm(config.EMB_DIM)
+        self.emb_norm = nn.LayerNorm(config.EMB_DIM) if config.EMB_NORM else nn.Identity()
         self.emb_dropout = nn.Dropout(config.EMB_DP)
         if stop_mask is not None:
             self.register_buffer("stop_mask", stop_mask)
@@ -140,34 +124,38 @@ class QuoraSiameseClassifier(nn.Module):
             self.embedding.weight.data.copy_(embedding)
             self.embedding.weight.requires_grad = not config.FREEZE_TOKEN_EMBEDDING
 
-        self.LSTM = nn.LSTM(
+        self.enhc_lstm = nn.LSTM(
             input_size=config.EMB_DIM,
-            hidden_size=config.HIDDEN_DIM,
-            bidirectional=config.BIDIRECTIONAL,
-            num_layers=config.NUM_LAYERS,
-            dropout=config.DROPOUT if config.NUM_LAYERS > 1 else 0.0,
+            hidden_size=config.ENHC_LSTM_DIM,
+            bidirectional=config.ENHC_LSTM_BIDIRECTIONAL,
+            num_layers=config.ENHC_LSTM_NUM_LAYERS,
+            dropout=config.ENHC_LSTM_DROPOUT if config.ENHC_LSTM_NUM_LAYERS > 1 else 0.0,
             batch_first=True
         )
-        self.lstm_norm = nn.LayerNorm(config.LSTM_OUT)
-        self.cross_attention = MultiHeadCrossAttention(config.LSTM_OUT)
-        if config.POOLING_TYPE == "MaskedMean":
-            self.pool = MaskedMeanPool()
-        elif config.POOLING_TYPE == "Self-Additive":
-            self.pool = SelfAttentivePooling(config.LSTM_OUT, config.LSTM_OUT)
-        else:
-            ValueError(f"Unknown pooling type: {config.POOLING_TYPE}")
-        
-        if config.ATTENTION_PROJECTION:
-            self.proj = nn.Linear(config.LSTM_OUT, config.PROJECT_DIM)
-        else:
-            self.proj = nn.Identity()
-        
+        self.enhc_lstm_norm = nn.LayerNorm(config.ENHC_LSTM_OUT) if config.ENHC_LSTM_NORM else nn.Identity()
+        self.cross_attention = MultiHeadCrossAttention(config.ENHC_LSTM_OUT)
+        self.proj = self._build_fc_layers(
+            input_dim=4*config.ENHC_LSTM_OUT,
+            fc_dims=config.PROJ_DIMS,
+            dropout=config.PROJ_DROPOUT
+        )
+        self.comp_lstm = nn.LSTM(
+            input_size=config.PROJ_DIMS[-1],
+            hidden_size=config.COMP_LSTM_DIM,
+            bidirectional=config.COMP_LSTM_BIDIRECTIONAL,
+            num_layers=config.COMP_LSTM_NUM_LAYERS,
+            dropout=config.COMP_LSTM_DROPOUT if config.COMP_LSTM_NUM_LAYERS > 1 else 0.0,
+            batch_first=True
+        )
+        self.comp_lstm_norm = nn.LayerNorm(config.COMP_LSTM_OUT) if config.COMP_LSTM_NORM else nn.Identity()
+        self.pool = AvgMaxPool(mask_fill_num=model_cfg.MASK_FILL_NUM)
         self.fc_dims = self._build_fc_layers(
-            input_dim=config.INPUT_FC_DIM,
+            input_dim=config.COMP_LSTM_OUT,
             fc_dims=config.FC_DIMS,
             dropout=config.FC_DP
         )
-
+        self.final_layer = nn.Linear(config.FC_DIMS[-1], 1)
+        
     def _build_fc_layers(self, input_dim, fc_dims, dropout):
         layers = []
         for dim in fc_dims:
@@ -177,7 +165,6 @@ class QuoraSiameseClassifier(nn.Module):
                 nn.Dropout(dropout)
             ]
             input_dim = dim
-        layers.append(nn.Linear(input_dim, 1))   # final logit projection
         return nn.Sequential(*layers)
     
     def _create_mask(self, question):
@@ -185,28 +172,38 @@ class QuoraSiameseClassifier(nn.Module):
 
     def _encode(self, question):
         emb = self.embedding(question)
-        if self.config.LAYER_NORM_EMB:
-            emb = self.emb_norm(emb)
+        emb = self.emb_norm(emb)
         emb = self.emb_dropout(emb)
         mask = self._create_mask(question)
         if self.stop_mask is not None:
             token_stop_mask = self.stop_mask[question]
             mask = mask * token_stop_mask.float()
-        out, _ = self.LSTM(emb)
-        if self.config.LAYER_NORM_LSTM:
-            out = self.lstm_norm(out)
+        out, _ = self.enhc_lstm(emb)
+        out = self.enhc_lstm_norm(out)
         return out, mask
 
     def forward(self, q1, q2):
         out1, mask1 = self._encode(q1)
         out2, mask2 = self._encode(q2)
+        
         cross1 = self.cross_attention(query=out1, key_value=out2, mask_kv=mask2)
         cross2 = self.cross_attention(query=out2, key_value=out1, mask_kv=mask1)
-        h1 = self.pool(cross1, mask1)
-        h2 = self.pool(cross2, mask2)
-        h1, h2 = self.proj(h1), self.proj(h2)
-        cosine_sim = F.cosine_similarity(h1, h2).unsqueeze(-1)
-        feat = torch.cat([h1, h2, abs(h1 - h2), h1*h2, cosine_sim], dim=1)
-        logits = self.fc_dims(feat)
+
+        enhc1 = torch.cat([out1, cross1, out1 - cross1, out1*cross1], dim=-1)
+        enhc2 = torch.cat([out2, cross2, out2 - cross2, out2*cross2], dim=-1)
+
+        proj1 = self.proj(enhc1)
+        proj2 = self.proj(enhc2)
+
+        comp1, _ = self.comp_lstm(proj1)
+        comp2, _ = self.comp_lstm(proj2)
+        comp1 = self.comp_lstm_norm(comp1)
+        comp2 = self.comp_lstm_norm(comp2)
+        
+        h1 = self.pool(comp1, mask1)
+        h2 = self.pool(comp2, mask2)
+        feat = torch.cat([h1, h2], dim=-1)
+        final_feat = self.fc_dims(feat)
+        logits = self.final_layer(final_feat)
         
         return logits.squeeze(-1)
