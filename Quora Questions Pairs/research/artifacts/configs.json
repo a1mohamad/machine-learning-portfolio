@@ -61,7 +61,7 @@
   },
   "model": {
     "model_type": "LSTM_attention",
-    "attention_type": "MultiHead-CrossAttention-Bahdanau",
+    "attention_type": "ESIM_Style-MultiHead-CrossAttention-Bahdanau",
     "use_self_attention": true,
     "num_heads": 4,
     "self_attention_num_heads": 4,
@@ -75,6 +75,7 @@
     "emb_dp": 0.0,
     "loss": "BCE with Logits",
     "enhc_lstm_dropout": 0.4,
+    "enhc_lstm_num_layers": 2,
     "enhc_lstm_dim": 256,
     "enhc_lstm_bidirectional": true,
     "enhc_lstm_out": 512,
@@ -83,6 +84,8 @@
     "comp_lstm_bidirectional": true,
     "comp_lstm_out": 256,
     "comp_lstm_norm": false,
+    "comp_lstm_dropout": 0.3,
+    "comp_lstm_num_layers": 2,
     "label_smoothing": 0.05,
     "fc_dims": [
       1024,
@@ -90,7 +93,6 @@
     ],
     "fc_dp": 0.5,
     "mask_fill_num": -10000000000.0,
-    "num_layers": 2,
     "skip_connection": false
   }
 }
