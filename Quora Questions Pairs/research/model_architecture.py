@@ -5,7 +5,6 @@ import torch.nn.functional as F
 class ModelConfig:
     MODEL_TYPE = "LSTM_attention"
     ATTENTION_TYPE = "MultiHead-CrossAttention-Bahdanau"
-    CNN_PLACE = "Before-LSTM"
     USE_SELF_ATTENTION = True
 
     NUM_HEADS = 4                                     
@@ -14,9 +13,6 @@ class ModelConfig:
 
     ATTENTION_DROPOUT = 0.0
     POOLING_TYPE = "MaskedMean"
-
-    CNN_KERNEL_SIZES = [2, 3]
-    CNN_DROPOUT = 0.1
     
     # Embedding
     LAYER_NORM_EMB = False
@@ -110,23 +106,6 @@ class MultiHeadCrossAttention(nn.Module):
         x = self.out_linear(x)
         return self.norm(query + x)
 
-class CNN(nn.Module):
-    def __init__(self, in_channels, out_channels, kernels, dropout):
-        super().__init__()
-        self.convs = nn.ModuleList([
-            nn.Conv1d(in_channels, out_channels, k, padding='same')
-            for k in kernels
-        ])
-        self.activation = nn.GELU()
-        self.dropout = nn.Dropout(dropout)
-        self.proj = nn.Conv1d(out_channels*len(kernels), out_channels, kernel_size=1)
-
-    def forward(self, x):
-        convs_out = [self.dropout(self.activation(conv(x))) for conv in self.convs]
-        x = torch.cat(convs_out, dim=1)
-        x = self.proj(x)
-        return x
-
 class MaskedMeanPool(nn.Module):
     def __init__(self):
         super().__init__()
@@ -168,12 +147,6 @@ class QuoraSiameseClassifier(nn.Module):
             num_layers=config.NUM_LAYERS,
             dropout=config.DROPOUT if config.NUM_LAYERS > 1 else 0.0,
             batch_first=True
-        )
-        self.cnn = CNN(
-            in_channels=model_cfg.EMB_DIM,
-            out_channels=model_cfg.EMB_DIM,
-            kernels=model_cfg.CNN_KERNEL_SIZES,
-            dropout=model_cfg.CNN_DROPOUT
         )
         self.lstm_norm = nn.LayerNorm(config.LSTM_OUT)
         self.cross_attention = MultiHeadCrossAttention(config.LSTM_OUT)
@@ -219,9 +192,6 @@ class QuoraSiameseClassifier(nn.Module):
         if self.stop_mask is not None:
             token_stop_mask = self.stop_mask[question]
             mask = mask * token_stop_mask.float()
-        emb = emb.transpose(1, 2)
-        emb = self.cnn(emb)
-        emb = emb.transpose(1, 2)
         out, _ = self.LSTM(emb)
         if self.config.LAYER_NORM_LSTM:
             out = self.lstm_norm(out)
