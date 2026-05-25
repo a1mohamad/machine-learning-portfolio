@@ -62,18 +62,12 @@
   "model": {
     "model_type": "LSTM_attention",
     "attention_type": "MultiHead-CrossAttention-Bahdanau",
-    "cnn_place": "Before-LSTM",
     "use_self_attention": true,
     "num_heads": 4,
     "self_attention_num_heads": 4,
     "cross_attention_num_heads": 4,
     "attention_dropout": 0.0,
     "pooling_type": "MaskedMean",
-    "cnn_kernel_sizes": [
-      2,
-      3
-    ],
-    "cnn_dropout": 0.1,
     "layer_norm_emb": false,
     "freeze_token_embedding": true,
     "token_embedding": "gloVe-6B-100d",
