@@ -43,7 +43,7 @@ class ModelConfig:
         MARGIN = 1.0
     elif LOSS == "BCE with Logits":
         LABEL_SMOOTHING = 0.05
-        FC_DIMS = [1024, 512]
+        FC_DIMS = [512, 256]
         FC_DP = 0.5
 
     MASK_FILL_NUM = -1e10
@@ -150,7 +150,7 @@ class QuoraSiameseClassifier(nn.Module):
         self.comp_lstm_norm = nn.LayerNorm(config.COMP_LSTM_OUT) if config.COMP_LSTM_NORM else nn.Identity()
         self.pool = AvgMaxPool(mask_fill_num=model_cfg.MASK_FILL_NUM)
         self.fc_dims = self._build_fc_layers(
-            input_dim=config.COMP_LSTM_OUT,
+            input_dim=4*config.COMP_LSTM_OUT,
             fc_dims=config.FC_DIMS,
             dropout=config.FC_DP
         )
