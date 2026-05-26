@@ -101,9 +101,9 @@ class AvgMaxPool(nn.Module):
 
     def forward(self, x, mask):
         lengths = mask.sum(dim=1, keepdim=True).clamp(min=1)
-        avg_pool = (x * mask.unsqueeze(-1).sum(dim=1)) / lengths
+        avg_pool = (x * mask.unsqueeze(-1)).sum(dim=1) / lengths
 
-        x_masked = mask.masked_fill(mask == 0, self.mask_fill_num)
+        x_masked = mask.masked_fill(mask.unsqueeze(-1) == 0, self.mask_fill_num)
         max_pool, _ = x_masked.max(dim=1)
 
         return torch.cat([avg_pool, max_pool], dim=-1)
