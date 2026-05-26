@@ -83,7 +83,7 @@
     "comp_lstm_dim": 128,
     "comp_lstm_bidirectional": true,
     "comp_lstm_out": 256,
-    "comp_lstm_norm": false,
+    "comp_lstm_norm": true,
     "comp_lstm_dropout": 0.3,
     "comp_lstm_num_layers": 2,
     "proj_dims": [
