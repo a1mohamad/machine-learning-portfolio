@@ -1,3 +1,8 @@
+# Images
+*.png
+*.jpg
+*.jpeg
+
 # MLflow
 mlruns/
 *.db
@@ -12,7 +17,7 @@ __pycache__/
 glove.6B.100d.txt
 
 # Some other files like model
-
+Feedback Prize/
 Cassava Leaf Disease/model/
 Digit Recognizer/data/test.csv
 Global Wheat Detection/model/
