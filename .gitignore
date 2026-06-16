@@ -18,6 +18,9 @@ glove.6B.100d.txt
 
 # Some other files like model
 Feedback Prize/
+SNLI/
+SQuAD/
+Commonlit/
 Cassava Leaf Disease/model/
 Digit Recognizer/data/test.csv
 Global Wheat Detection/model/
