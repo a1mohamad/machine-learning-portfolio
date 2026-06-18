@@ -15,7 +15,7 @@
     "req_text": "C:\\Users\\98922\\Documents\\python_scripts\\AI\\research-notebooks\\Quora Questions Pairs\\research\\requirements.txt",
     "req_script": "C:\\Users\\98922\\Documents\\python_scripts\\AI\\research-notebooks\\Quora Questions Pairs\\research\\requirements.py",
     "model_script": "C:\\Users\\98922\\Documents\\python_scripts\\AI\\research-notebooks\\Quora Questions Pairs\\research\\model_architecture.py",
-    "notebook_path": "C:\\Users\\98922\\Documents\\python_scripts\\AI\\research-notebooks\\Quora Questions Pairs\\research\\LSTM-attention-train.ipynb",
+    "notebook_path": "C:\\Users\\98922\\Documents\\python_scripts\\AI\\research-notebooks\\Quora Questions Pairs\\research\\LSTM-attention-train-ESIM.ipynb",
     "data_dir": "C:\\Users\\98922\\Documents\\python_scripts\\AI\\research-notebooks\\Quora Questions Pairs\\research\\data",
     "mlflow_dir": "C:\\Users\\98922\\Documents\\python_scripts\\AI\\research-notebooks\\Quora Questions Pairs\\research\\mlruns",
     "checkpoint_dir": "C:\\Users\\98922\\Documents\\python_scripts\\AI\\research-notebooks\\Quora Questions Pairs\\research\\artifacts\\checkpoint",
